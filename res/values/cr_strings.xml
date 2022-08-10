@@ -1246,4 +1246,10 @@
     <string name="kg_custom_clock_top_margin_title">Double-line clock position</string>
     <string name="kg_small_clock_text_size_title">Small clock size</string>
     <string name="kg_large_clock_text_size_title">Double-line clock size</string>
+
+    <!-- Status bar padding -->
+    <string name="statusbar_padding">Status bar padding</string>
+    <string name="statusbar_top_padding">Top padding</string>
+    <string name="statusbar_left_padding">Left padding</string>
+    <string name="statusbar_right_padding">Right padding</string>
 </resources>

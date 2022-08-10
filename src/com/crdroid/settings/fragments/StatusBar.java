@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.UserHandle;
@@ -66,6 +67,9 @@ public class StatusBar extends SettingsPreferenceFragment implements
     private static final String KEY_STATUS_BAR_SHOW_BATTERY_PERCENT = "status_bar_show_battery_percent";
     private static final String KEY_STATUS_BAR_BATTERY_STYLE = "status_bar_battery_style";
     private static final String KEY_STATUS_BAR_BATTERY_TEXT_CHARGING = "status_bar_battery_text_charging";
+    private static final String KEY_STATUSBAR_TOP_PADDING = "statusbar_top_padding";
+    private static final String KEY_STATUSBAR_LEFT_PADDING = "statusbar_left_padding";
+    private static final String KEY_STATUSBAR_RIGHT_PADDING = "statusbar_right_padding";
 
     private static final int PULLDOWN_DIR_NONE = 0;
     private static final int PULLDOWN_DIR_RIGHT = 1;
@@ -85,6 +89,9 @@ public class StatusBar extends SettingsPreferenceFragment implements
     private SwitchPreference mDataDisabled;
     private SwitchPreference mOldMobileType;
     private SwitchPreference mBatteryTextCharging;
+    private SystemSettingSeekBarPreference mSbLeftPadding;
+    private SystemSettingSeekBarPreference mSbRightPadding;
+    private SystemSettingSeekBarPreference mSbTopPadding;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -94,6 +101,8 @@ public class StatusBar extends SettingsPreferenceFragment implements
 
         ContentResolver resolver = getActivity().getContentResolver();
         Context mContext = getActivity().getApplicationContext();
+        Resources res = null;
+        Context ctx = getContext();
 
         final PreferenceScreen prefScreen = getPreferenceScreen();
 
@@ -160,6 +169,32 @@ public class StatusBar extends SettingsPreferenceFragment implements
             mQuickPulldown.setEntries(R.array.status_bar_quick_qs_pulldown_entries_rtl);
             mQuickPulldown.setEntryValues(R.array.status_bar_quick_qs_pulldown_values_rtl);
         }
+
+        try {
+            res = ctx.getPackageManager().getResourcesForApplication("com.android.systemui");
+        } catch (NameNotFoundException e) {
+            e.printStackTrace();
+        }
+
+        float density = Resources.getSystem().getDisplayMetrics().density;
+
+        mSbLeftPadding = (SystemSettingSeekBarPreference) findPreference(KEY_STATUSBAR_LEFT_PADDING);
+        int sbLeftPadding = Settings.System.getIntForUser(ctx.getContentResolver(),
+                Settings.System.STATUSBAR_LEFT_PADDING, ((int) (res.getIdentifier("com.android.systemui:dimen/status_bar_padding_start", null, null) / density)), UserHandle.USER_CURRENT);
+        mSbLeftPadding.setValue(sbLeftPadding);
+        mSbLeftPadding.setOnPreferenceChangeListener(this);
+
+        mSbRightPadding = (SystemSettingSeekBarPreference) findPreference(KEY_STATUSBAR_RIGHT_PADDING);
+        int sbRightPadding = Settings.System.getIntForUser(ctx.getContentResolver(),
+                Settings.System.STATUSBAR_RIGHT_PADDING, ((int) (res.getIdentifier("com.android.systemui:dimen/status_bar_padding_end", null, null) / density)), UserHandle.USER_CURRENT);
+        mSbRightPadding.setValue(sbRightPadding);
+        mSbRightPadding.setOnPreferenceChangeListener(this);
+
+        mSbTopPadding = (SystemSettingSeekBarPreference) findPreference(KEY_STATUSBAR_TOP_PADDING);
+        int sbTopPadding = Settings.System.getIntForUser(ctx.getContentResolver(),
+               Settings.System.STATUSBAR_TOP_PADDING, ((int) (res.getIdentifier("com.android.systemui:dimen/status_bar_padding_top", null, null) / density)), UserHandle.USER_CURRENT);
+        mSbTopPadding.setValue(sbTopPadding);
+        mSbTopPadding.setOnPreferenceChangeListener(this);
     }
 
     @Override
@@ -183,6 +218,24 @@ public class StatusBar extends SettingsPreferenceFragment implements
         } else if (preference == mQuickPulldown) {
             int value = Integer.parseInt((String) newValue);
             updateQuickPulldownSummary(value);
+            return true;
+        } else if (preference == mSbLeftPadding) {
+            int leftValue = (Integer) newValue;
+            int sbLeft = ((int) (leftValue / Resources.getSystem().getDisplayMetrics().density));
+            Settings.System.putIntForUser(getContext().getContentResolver(),
+                    Settings.System.STATUSBAR_LEFT_PADDING, sbLeft, UserHandle.USER_CURRENT);
+            return true;
+        } else if (preference == mSbRightPadding) {
+            int rightValue = (Integer) newValue;
+            int sbRight = ((int) (rightValue / Resources.getSystem().getDisplayMetrics().density));
+            Settings.System.putIntForUser(getContext().getContentResolver(),
+                    Settings.System.STATUSBAR_RIGHT_PADDING, sbRight, UserHandle.USER_CURRENT);
+            return true;
+        } else if (preference == mSbTopPadding) {
+            int topValue = (Integer) newValue;
+            int sbTop = ((int) (topValue / Resources.getSystem().getDisplayMetrics().density));
+            Settings.System.putIntForUser(getContext().getContentResolver(),
+                    Settings.System.STATUSBAR_TOP_PADDING, sbTop, UserHandle.USER_CURRENT);
             return true;
         }
         return false;
